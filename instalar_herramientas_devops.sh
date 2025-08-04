@@ -85,7 +85,11 @@ terraform version
 echo "Terraform instalado exitosamente via descarga de binario."
 # --- FIN DE LA SECCIÓN DE TERRAFORM ---
 
-echo "¡Instalación de herramientas DevOps locales completa!"
-echo "Para iniciar Minikube después de conectarte vía SSH, ejecuta: minikube start --driver=docker"
+
+
+echo "Iniciando Minikube..."
+minikube start --driver=docker --memory 4096 --cpus 2 # Ajusta memoria y CPUs si es necesario
+echo "Minikube iniciado."
+
 echo "Recuerda que para que el usuario 'vagrant' pueda ejecutar 'docker' y 'minikube' sin sudo,"
 echo "deberás cerrar sesión de SSH y volver a conectarte después de la primera instalación."

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx # El selector coincide con la etiqueta del Deployment
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80 # Puerto interno del Service
+      targetPort: 80 # Puerto del contenedor
