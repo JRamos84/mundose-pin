@@ -12,11 +12,12 @@ helm repo update
 # Creamos el namespace para Prometheus
 kubectl create namespace prometheus || true
 
-# Desplegamos Prometheus. Usamos "upgrade --install" para evitar errores.
+# Desplegamos Prometheus. Usamos "upgrade --install" para evitar errores de reinstalación.
 helm upgrade --install prometheus prometheus-community/prometheus \
   --namespace prometheus \
   --set alertmanager.persistentVolume.storageClass="standard" \
   --set server.persistentVolume.storageClass="standard" \
+  -f /vagrant/monitoreo/prometheus-values.yaml \
   --wait # Espera hasta que todos los pods estén listos
 
 # Verificamos que los pods de Prometheus se estén ejecutando
@@ -27,14 +28,15 @@ kubectl get pods -n prometheus
 echo "Exponiendo el puerto de Prometheus (9090)..."
 
 # Usamos 'kubectl wait' para asegurarnos de que el deployment esté listo.
-kubectl wait --namespace prometheus --for=condition=ready pod -l app.kubernetes.io/instance=prometheus,app.kubernetes.io/name=prometheus --timeout=300s
+# El selector busca el Deployment del servidor de Prometheus y espera por sus pods.
+kubectl wait --namespace prometheus --for=condition=ready pod -l app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server --timeout=300s
 
 # Ahora, encontramos el nombre del pod con el selector corregido y hacemos el port-forward.
-export POD_NAME=$(kubectl get pods --namespace prometheus -l "app.kubernetes.io/instance=prometheus,app.kubernetes.io/name=prometheus" -o jsonpath="{.items[0].metadata.name}")
+export POD_NAME=$(kubectl get pods --namespace prometheus -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server" -o jsonpath="{.items[0].metadata.name}")
 
 if [ -z "$POD_NAME" ]; then
-    echo "Error: No se encontró el pod de Prometheus. Revisa las etiquetas."
+    echo "Error: No se encontró el pod del servidor de Prometheus. Revisa las etiquetas."
 else
     kubectl port-forward -n prometheus $POD_NAME 9090:9090 --address 0.0.0.0 &
-    echo "Prometheus está disponible en http://localhost:9090"
+echo "Prometheus está disponible en http://localhost:9090"
 fi

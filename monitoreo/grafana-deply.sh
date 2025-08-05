@@ -32,5 +32,5 @@ if [ -z "$POD_NAME" ]; then
     echo "Error: No se encontró el pod de Grafana. Revisa las etiquetas."
 else
     kubectl port-forward -n prometheus $POD_NAME 3000:3000 --address 0.0.0.0 &
-    echo "Grafana está disponible en http://localhost:3000"
+echo "Grafana está disponible en http://localhost:3000"
 fi

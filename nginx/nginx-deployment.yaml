@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: nginx-deployment
 spec:
-  replicas: 2 # Queremos 2 pods de Nginx
+  replicas: 2
   selector:
     matchLabels:
       app: nginx
@@ -11,9 +11,43 @@ spec:
     metadata:
       labels:
         app: nginx
+      annotations:
+        # Anotación que usa Prometheus para descubrir automáticamente el Pod
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
     spec:
       containers:
       - name: nginx-container
         image: nginx:latest
         ports:
         - containerPort: 80
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/conf.d
+      - name: nginx-exporter
+        image: nginx/nginx-prometheus-exporter:1.1.0
+        ports:
+        - containerPort: 9113
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+        location /nginx_status {
+            stub_status on;
+            allow 127.0.0.1; # Permitimos el acceso solo desde localhost (el sidecar)
+            deny all;
+        }
+    }
