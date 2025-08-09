@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script para instalar/actualizar Prometheus usando Helm en Minikube
+# Script mejorado para instalar/actualizar Prometheus
 
 echo "Configurando repositorios y desplegando Prometheus..."
 
@@ -19,4 +19,14 @@ helm upgrade --install prometheus prometheus-community/prometheus \
 echo "Verificando la instalación de Prometheus..."
 kubectl get pods -n prometheus
 
-echo "Prometheus está disponible en http://localhost:9090"
+# --- Parte mejorada para detectar el NodePort ---
+echo "Detectando el puerto de Prometheus..."
+
+# Obtener el puerto NodePort dinámico del servicio de Prometheus
+PROMETHEUS_NODEPORT=$(kubectl get service -n prometheus prometheus-server -o jsonpath='{.spec.ports[0].nodePort}')
+
+echo "--------------------------------------------------------------------------------"
+echo "Prometheus ha sido desplegado exitosamente."
+echo "Puedes acceder a la interfaz de Prometheus en tu máquina local a través de:"
+echo "  - http://localhost:${PROMETHEUS_NODEPORT}"
+echo "--------------------------------------------------------------------------------"

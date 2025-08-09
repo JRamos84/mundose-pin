@@ -1,17 +1,16 @@
----
 - name: Configurar entorno DevOps
   hosts: all
   become: yes
   vars:
     docker_user: vagrant
-    k8s_version: "1.26.2" # Usar una versión específica para mayor control
+    k8s_version: "1.26.2"
   tasks:
     - name: Actualizar el cache de apt (inicial)
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
 
     - name: Instalar dependencias para Docker
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       loop:
@@ -21,21 +20,21 @@
         - lsb-release
 
     - name: Añadir la clave GPG de Docker
-      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      ansible.builtin.shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
       args:
         creates: /etc/apt/keyrings/docker.gpg
 
     - name: Añadir el repositorio de Docker
-      shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      ansible.builtin.shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
       args:
         creates: /etc/apt/sources.list.d/docker.list
 
     - name: Actualizar el cache de apt (después de añadir Docker repo)
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
 
     - name: Instalar Docker, containerd y plugins
-      apt:
+      ansible.builtin.apt:
         name: "{{ item }}"
         state: present
       loop:
@@ -46,82 +45,71 @@
         - docker-compose-plugin
 
     - name: Añadir usuario 'vagrant' al grupo 'docker'
-      user:
+      ansible.builtin.user:
         name: "{{ docker_user }}"
         groups: docker
         append: yes
 
     - name: Habilitar y arrancar el servicio de Docker
-      systemd:
+      ansible.builtin.systemd:
         name: docker
         state: started
         enabled: yes
 
-    - name: Instalar kubectl
-      shell: |
-        curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/{{ k8s_version }}/2023-03-17/bin/linux/amd64/kubectl
-        chmod +x ./kubectl
-        mv ./kubectl /usr/local/bin/kubectl
-      args:
-        chdir: /tmp/
-        creates: /usr/local/bin/kubectl
+    - name: Instalar kubectl (usando get_url y file)
+      ansible.builtin.get_url:
+        url: "https://dl.k8s.io/release/v{{ k8s_version }}/bin/linux/amd64/kubectl"
+        dest: "/usr/local/bin/kubectl"
+        mode: '0755'
+        force: yes
 
-    - name: Instalar eksctl
-      shell: |
-        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-        mv /tmp/eksctl /usr/local/bin/eksctl
-      args:
-        creates: /usr/local/bin/eksctl
+    - name: Instalar Minikube (usando get_url y file)
+      ansible.builtin.get_url:
+        url: "https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64"
+        dest: "/usr/local/bin/minikube"
+        mode: '0755'
+        force: yes
 
-    - name: Instalar Minikube
-      shell: |
-        curl -Lo minikube https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-        chmod +x minikube
-        mv minikube /usr/local/bin/minikube
-      args:
-        chdir: /tmp/
-        creates: /usr/local/bin/minikube
+    - name: Instalar eksctl (solución al problema de la URL)
+      block:
+        - name: Obtener el nombre del sistema operativo (uname -s)
+          ansible.builtin.command: uname -s
+          register: uname_output
+          changed_when: false
 
-    - name: Instalar Helm
-      shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-      args:
-        creates: /usr/local/bin/helm
+        - name: Descargar el archivo comprimido de eksctl
+          ansible.builtin.get_url:
+            url: "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_{{ uname_output.stdout }}_amd64.tar.gz"
+            dest: "/tmp/eksctl.tar.gz"
+            force: yes
+        
+        - name: Descomprimir eksctl
+          ansible.builtin.unarchive:
+            src: "/tmp/eksctl.tar.gz"
+            dest: "/usr/local/bin"
+            remote_src: yes
+            extra_opts: ['--strip-components=0']
 
-    # - name: Instalar Terraform (Método de descarga de binario)
-    #   block:
-    #     - name: Instalar jq y unzip
-    #       apt:
-    #         name: "{{ item }}"
-    #         state: present
-    #       loop:
-    #         - jq
-    #         - unzip
-    #         - curl
+    - name: Instalar Helm (usando get_url y unarchive)
+      block:
+        - name: Descargar el archivo comprimido de Helm
+          ansible.builtin.get_url:
+            url: "https://get.helm.sh/helm-v3.13.2-linux-amd64.tar.gz"
+            dest: "/tmp/helm.tar.gz"
+            force: yes
+            timeout: 300 
+          tags:
+            - helm
+        
+        - name: Descomprimir Helm
+          ansible.builtin.unarchive:
+            src: "/tmp/helm.tar.gz"
+            dest: "/usr/local/bin"
+            extra_opts: ['--strip-components=1']
+            remote_src: yes
 
-    #     - name: Obtener la última versión de Terraform
-    #       shell: curl -s "https://checkpoint-api.hashicorp.com/v1/check/terraform" | jq -r .current_version
-    #       register: terraform_version
-
-    #     - name: Descargar Terraform
-    #       ansible.builtin.get_url:
-    #         url: "https://releases.hashicorp.com/terraform/{{ terraform_version.stdout }}/terraform_{{ terraform_version.stdout }}_linux_amd64.zip"
-    #         dest: /tmp/terraform.zip
-    #         mode: '0755'
-
-    #     - name: Descomprimir el archivo de Terraform
-    #       unarchive:
-    #         src: /tmp/terraform.zip
-    #         dest: /usr/local/bin/
-    #         remote_src: yes
-
-    #     - name: Eliminar el archivo zip de Terraform
-    #       file:
-    #         path: /tmp/terraform.zip
-    #         state: absent
-            
-    # Tarea agregada para solucionar el problema de Nginx
     - name: Crear la carpeta src en /vagrant
-      file:
+      ansible.builtin.file:
         path: /vagrant/src
         state: directory
         owner: vagrant

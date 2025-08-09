@@ -17,4 +17,14 @@ helm upgrade --install grafana grafana/grafana \
 echo "Verificando la instalación de Grafana..."
 kubectl get pods -n grafana
 
-echo "Grafana está disponible en http://localhost:3000"
+# --- Detectar el puerto dinámico de Grafana ---
+echo "Detectando el puerto de Grafana..."
+
+# Obtener el puerto NodePort dinámico del servicio de Grafana
+GRAFANA_NODEPORT=$(kubectl get service -n grafana grafana -o jsonpath='{.spec.ports[0].nodePort}')
+
+echo "--------------------------------------------------------------------------------"
+echo "Grafana ha sido desplegado exitosamente."
+echo "Puedes acceder a la interfaz de Grafana en tu máquina local a través de:"
+echo "  - http://localhost:${GRAFANA_NODEPORT}"
+echo "--------------------------------------------------------------------------------"
