@@ -1,56 +1,94 @@
-Laboratorio de DevOps: Guía Rápida
-Este proyecto es un laboratorio de DevOps que te permite practicar con herramientas clave como Kubernetes, Nginx, Prometheus y Grafana de manera local y sencilla.
+# Laboratorio DevOps con Minikube
 
-Sigue estos pasos para levantar el entorno. No necesitas ser un experto en programación, solo tienes que copiar y pegar los comandos.
+Este proyecto contiene una configuración para desplegar un entorno de monitoreo y un servidor web estático en un clúster local de Kubernetes usando **Minikube**. El propósito de este laboratorio es proporcionar un entorno de práctica listo para usar, ideal para desarrolladores y estudiantes de DevOps que quieran familiarizarse con la orquestación de contenedores y las herramientas de monitoreo más comunes.  
 
-Requisitos Previos
-Necesitas instalar tres programas en tu computadora:
+El laboratorio incluye los siguientes servicios:
 
-Vagrant: Para crear una máquina virtual.
+- **Nginx:** Un servidor web que aloja una página estática simple para demostrar el despliegue de una aplicación.  
+- **Prometheus:** Una potente solución de monitoreo y alerta que se encarga de recolectar métricas del clúster y de los servicios.  
+- **Grafana:** Un dashboard de visualización que se integra con Prometheus para mostrar las métricas en paneles interactivos y fáciles de entender.  
 
-VirtualBox: El programa que Vagrant usa para crear la máquina virtual.
+La configuración está diseñada para ser flexible, permitiendo su despliegue tanto en una máquina virtual con Vagrant para un entorno aislado y controlado, como directamente en una máquina física para mayor simplicidad y eficiencia.
 
-Ansible: Un programa que instala y configura las herramientas dentro de la máquina virtual.
+---
 
-1. Preparar la Máquina Virtual
-El archivo principal se llama Vagrantfile. Solo necesitas asegurarte de que está configurado correctamente. En este proyecto, ya está todo listo.
+## Requisitos
 
-Desde la terminal en la carpeta de este proyecto, ejecuta este comando para crear la máquina virtual y configurar las herramientas básicas.
+Para ejecutar el laboratorio en tu máquina física, es fundamental que tengas instaladas y configuradas las siguientes herramientas en tu sistema. Cada una cumple una función específica dentro del flujo de trabajo:
 
-vagrant up --provision
+- **Docker:** Actúa como el motor de contenedores que Minikube utiliza para crear y gestionar el clúster local de Kubernetes. Sin Docker, Minikube no puede funcionar con el driver de contenedores.  
+- **Minikube:** Se encarga de crear un clúster de Kubernetes de un solo nodo en tu máquina local. Es la herramienta perfecta para desarrollo y pruebas, ya que simula un entorno de Kubernetes completo sin la complejidad de un clúster de producción.  
+- **kubectl:** Es la herramienta de línea de comandos estándar para interactuar con los clústeres de Kubernetes. La usarás para desplegar aplicaciones (como Nginx) y para verificar el estado de los componentes del clúster.  
+- **Helm:** Conocido como el gestor de paquetes de Kubernetes, simplifica el despliegue de aplicaciones complejas. Para este proyecto, Helm se utiliza para instalar y configurar Prometheus y Grafana de manera sencilla a través de sus "charts" (paquetes preconfigurados).
 
-Nota: Este proceso puede tardar varios minutos en completarse.
+---
 
-2. Desplegar los Servicios
-Una vez que el comando anterior termine, la máquina virtual estará lista, pero las aplicaciones aún no se habrán desplegado. Ahora, usaremos un script para desplegar todo en un solo paso.
+## Despliegue del laboratorio
 
-Entra a la máquina virtual:
+El despliegue del entorno completo se gestiona a través del script `deploy_lab.sh`. Este script ha sido diseñado para automatizar todo el proceso, minimizando la intervención manual y asegurando que la configuración sea consistente. El script ejecuta los siguientes pasos en orden:
 
-vagrant ssh
+1. Inicia un clúster de Minikube con el driver de Docker. Este comando es idempotente, lo que significa que solo iniciará el clúster si no está en funcionamiento.  
+2. Despliega los servicios de Nginx, Prometheus y Grafana utilizando los archivos de manifiesto de Kubernetes y los charts de Helm.  
+3. Espera a que todos los pods estén listos y saludables antes de continuar.  
+4. Configura el reenvío de puertos para exponer los servicios del clúster en tu máquina local.
 
-Ejecuta el script deploy_lab.sh:
-Este script se encargará de iniciar Minikube, desplegar Nginx, Prometheus y Grafana, y crear los túneles de red para que puedas acceder a ellos.
+---
 
-/vagrant/deploy_lab.sh
+## Instrucciones
 
-Importante: Este script puede tardar unos minutos en completarse, ya que debe descargar las imágenes de Docker.
+1. Abre una terminal y navega al directorio raíz del proyecto:  
+   ```
+   cd /ruta/a/tu/proyecto
+   ```
 
-3. Acceder a los Servicios
-Una vez que el script termine, te mostrará las direcciones web para acceder a cada servicio. Simplemente copia y pega las URLs en tu navegador.
+2. Dale permisos de ejecución al script si aún no los tiene:  
+   ```
+   chmod +x deploy_lab.sh
+   ```
 
-Prometheus: Accede a la interfaz de monitoreo.
-http://192.168.56.10:9090
+3. Ejecuta el script de despliegue:  
+   ```
+   ./deploy_lab.sh
+   ```
 
-Grafana: Accede a la interfaz de visualización de datos.
-http://192.168.56.10:3000
+Una vez que el script finalice, verás un mensaje con las URLs de acceso a los servicios en tu máquina local.
 
-Para iniciar sesión en Grafana, el usuario es admin. La contraseña se genera automáticamente. Para obtenerla, usa este comando dentro de la máquina virtual:
-kubectl get secret --namespace grafana grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+---
 
-Nginx: Accede a la página web de ejemplo.
-http://192.168.56.10:8080
+## Verificación de los servicios
 
-Solución de Problemas
-Connection reset by peer: Si ves este error, significa que los túneles de red no están funcionando. Asegúrate de haber ejecutado el script deploy_lab.sh y que la máquina virtual no se haya detenido.
+Para asegurarte de que todo funciona correctamente después del despliegue, puedes usar estos comandos:
 
-Failed to connect to 192.168.56.10: Este error indica que tu computadora no puede comunicarse con la máquina virtual. El problema podría ser tu firewall. Desactívalo temporalmente o revisa que no esté bloqueando la conexión.
+1. **Verificar el estado de Minikube:**  
+   ```
+   minikube status
+   ```
+   Debe mostrar que el `host`, `kubelet` y `apiserver` están en estado **Running**.
+
+2. **Verificar el estado de los pods:**  
+   ```
+   kubectl get pods --all-namespaces
+   ```
+   Todos los pods de Nginx, Prometheus y Grafana deben estar en estado **Running** o **Completed**.
+
+3. **Verificar el estado de los servicios:**  
+   ```
+   kubectl get services --all-namespaces
+   ```
+
+4. **Acceder a las aplicaciones:**
+   - Nginx: [http://localhost:8080](http://localhost:8080)  
+   - Prometheus: [http://localhost:9090](http://localhost:9090)  
+   - Grafana: [http://localhost:3000](http://localhost:3000)  
+
+---
+
+## Limpiar el entorno
+
+Para detener y liberar completamente los recursos del clúster de Minikube:  
+```
+minikube stop && minikube delete
+```
+Esto detendrá el clúster y lo eliminará por completo, borrando todos los datos asociados.
+
+---

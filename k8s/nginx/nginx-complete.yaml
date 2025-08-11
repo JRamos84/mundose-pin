@@ -18,13 +18,13 @@ spec:
         ports:
         - containerPort: 80
         volumeMounts:
-        - name: html-volume # Montamos el volumen de host
+        - name: html-volume
           mountPath: /usr/share/nginx/html
       volumes:
       - name: html-volume
         hostPath:
-          # Esta es la ruta a la carpeta 'src' en tu máquina local
-          path: /vagrant/src
+          # Esta ruta apunta a la carpeta 'src' de tu máquina, que fue montada en Minikube en /host-html.
+          path: /host-html
           type: Directory
 ---
 apiVersion: v1
@@ -33,9 +33,9 @@ metadata:
   name: nginx-service
 spec:
   selector:
-    app: nginx
+    app: nginx # El selector coincide con la etiqueta del Deployment
   type: NodePort
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 80 # Puerto interno del Service
+      targetPort: 80 # Puerto del contenedor
