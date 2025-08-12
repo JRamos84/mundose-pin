@@ -43,12 +43,18 @@ helm upgrade --install grafana grafana/grafana \
   --wait
 
 echo "--- Verificando que todos los pods estén listos ---"
+# Se espera a que los pods de cada servicio estén listos
 kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
 kubectl wait --for=condition=ready pod -l app=prometheus-server -n prometheus --timeout=300s
 kubectl wait --for=condition=ready pod -l app=grafana -n grafana --timeout=300s
 
 echo "--- Configurando túneles de reenvío de puertos ---"
 HOST_IP=$(minikube ip)
+
+# Se detienen todos los procesos de port-forward para evitar conflictos
+echo "--- Deteniendo túneles anteriores para evitar conflictos ---"
+# Esto mata cualquier proceso de kubectl port-forward que esté corriendo en el background
+kill $(ps aux | grep 'kubectl port-forward' | grep -v 'grep' | awk '{print $2}') || true
 
 # Túnel para Prometheus
 PROMETHEUS_POD=$(kubectl get pods -n prometheus | grep 'prometheus-server-' | awk '{print $1}')
