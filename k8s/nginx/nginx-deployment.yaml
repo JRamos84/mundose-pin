@@ -19,13 +19,19 @@ spec:
         - containerPort: 80
         volumeMounts:
         - name: html-volume
-          mountPath: /usr/share/nginx/html
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+        - name: entrypoint-volume
+          mountPath: /docker-entrypoint.sh
+          subPath: nginx-entrypoint.sh
       volumes:
       - name: html-volume
-        hostPath:
-          # Esta ruta apunta a la carpeta 'src' de tu máquina, que fue montada en Minikube en /host-html.
-          path: /host-html
-          type: Directory
+        configMap:
+          name: nginx-html-config
+      - name: entrypoint-volume
+        configMap:
+          name: nginx-entrypoint
+          defaultMode: 0755 # ¡Esta es la línea clave!
 ---
 apiVersion: v1
 kind: Service
@@ -33,9 +39,9 @@ metadata:
   name: nginx-service
 spec:
   selector:
-    app: nginx # El selector coincide con la etiqueta del Deployment
+    app: nginx
   type: NodePort
   ports:
     - protocol: TCP
-      port: 80 # Puerto interno del Service
-      targetPort: 80 # Puerto del contenedor
+      port: 80
+      targetPort: 80

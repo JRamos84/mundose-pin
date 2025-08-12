@@ -7,13 +7,19 @@ minikube start --driver=docker --memory=2200mb --cpus 2
 eval $(minikube docker-env)
 
 # El comando de montaje de Vagrant no es necesario en una máquina física.
-# Si necesitas un volumen para Nginx, deberás crear un PersistentVolumeClaim
-# o usar un ConfigMap para el contenido estático.
 echo "--- La carpeta compartida de Vagrant no es necesaria en este entorno. ---"
+
+# --- CREACIÓN DE CONFIGMAPS ---
+# Esto creará un ConfigMap con el contenido de tu archivo src/index.html.
+echo "--- Creando ConfigMap para el contenido HTML de Nginx ---"
+kubectl create configmap nginx-html-config --from-file=src/index.html --dry-run=client -o yaml | kubectl apply -f -
+
+# Esto creará un ConfigMap con el script de inicio para Nginx.
+echo "--- Creando ConfigMap para el script de inicio de Nginx ---"
+kubectl create configmap nginx-entrypoint --from-file=src/nginx-entrypoint.sh --dry-run=client -o yaml | kubectl apply -f -
 
 echo "--- Desplegando Nginx ---"
 kubectl apply -f k8s/nginx/nginx-deployment.yaml
-kubectl apply -f k8s/nginx/nginx-service.yaml
 
 echo "--- Desplegando Prometheus ---"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
@@ -38,7 +44,7 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "--- Verificando que todos los pods estén listos ---"
 kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
-kubectl wait --for=condition=ready pod -l app=prometheus -n prometheus --timeout=300s
+kubectl wait --for=condition=ready pod -l app=prometheus-server -n prometheus --timeout=300s
 kubectl wait --for=condition=ready pod -l app=grafana -n grafana --timeout=300s
 
 echo "--- Configurando túneles de reenvío de puertos ---"

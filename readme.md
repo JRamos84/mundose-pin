@@ -87,7 +87,7 @@ Para asegurarte de que todo funciona correctamente después del despliegue, pued
 
 Para detener y liberar completamente los recursos del clúster de Minikube:  
 ```
-minikube stop && minikube delete
+
 ```
 Esto detendrá el clúster y lo eliminará por completo, borrando todos los datos asociados.
 
