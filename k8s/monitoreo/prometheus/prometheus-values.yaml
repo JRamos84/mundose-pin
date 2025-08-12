@@ -22,4 +22,13 @@ server:
         replacement: $1:9113
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
-
+    - job_name: 'nginx-exporter'
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: nginx
+      - source_labels: [__meta_kubernetes_pod_container_port_number]
+        action: keep
+        regex: "9113"

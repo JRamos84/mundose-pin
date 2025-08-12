@@ -48,28 +48,27 @@ kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus-server -n prometheus --timeout=300s
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n grafana --timeout=300s
 
-echo "--- Configurando túneles de reenvío de puertos ---"
-HOST_IP=$(minikube ip)
+echo "--- Todos los pods están listos. Configurando túneles de reenvío de puertos ---"
 
 # Se detienen todos los procesos de port-forward para evitar conflictos
 echo "--- Deteniendo túneles anteriores para evitar conflictos ---"
 kill $(ps aux | grep 'kubectl port-forward' | grep -v 'grep' | awk '{print $2}') || true
 
-# Túnel para Prometheus
-# Se usa el selector de etiquetas correcto del Helm chart para obtener el pod
+# Obtiene los nombres de los pods con la sintaxis corregida
 PROMETHEUS_POD=$(kubectl get pods -n prometheus -l app.kubernetes.io/name=prometheus-server -o jsonpath='{.items[0].metadata.name}')
-nohup kubectl --namespace prometheus port-forward --address 0.0.0.0 $PROMETHEUS_POD 9090:9090 > /dev/null 2>&1 &
-
-# Túnel para Grafana
-# Se usa el selector de etiquetas correcto del Helm chart para obtener el pod
 GRAFANA_POD=$(kubectl get pods -n grafana -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
-nohup kubectl --namespace grafana port-forward --address 0.0.0.0 $GRAFANA_POD 3000:3000 > /dev/null 2>&1 &
-
-# Túnel para Nginx
-NGINX_POD=$(kubectl get pods -n default | grep 'nginx-deployment-' | awk '{print $1}')
-nohup kubectl --namespace default port-forward --address 0.0.0.0 $NGINX_POD 8080:80 > /dev/null 2>&1 &
+NGINX_POD=$(kubectl get pods -n default -l app=nginx -o jsonpath='{.items[0].metadata.name}')
 
 echo "--- ¡Laboratorio listo! ---"
+echo "Todos los servicios están desplegados. Ahora puedes iniciar los túneles de reenvío de puertos:"
+echo ""
+echo "En una terminal separada, usa estos comandos para acceder a tus servicios:"
+echo "---"
+echo "kubectl --namespace prometheus port-forward --address 0.0.0.0 $PROMETHEUS_POD 9090:9090 &"
+echo "kubectl --namespace grafana port-forward --address 0.0.0.0 $GRAFANA_POD 3000:3000 &"
+echo "kubectl --namespace default port-forward --address 0.0.0.0 $NGINX_POD 8080:80 &"
+echo "---"
+echo ""
 echo "Puedes acceder a los servicios en tu máquina:"
 echo "  - Prometheus: http://localhost:9090"
 echo "  - Grafana:    http://localhost:3000"

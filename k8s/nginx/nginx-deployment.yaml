@@ -1,3 +1,4 @@
+# k8s/nginx/nginx-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,17 +22,24 @@ spec:
         - name: html-volume
           mountPath: /usr/share/nginx/html/index.html
           subPath: index.html
-        - name: entrypoint-volume
-          mountPath: /docker-entrypoint.sh
-          subPath: nginx-entrypoint.sh
+        - name: nginx-conf-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      - name: nginx-exporter-container
+        image: nginx/nginx-prometheus-exporter:1.0.0
+        ports:
+        - containerPort: 9113
       volumes:
       - name: html-volume
         configMap:
           name: nginx-html-config
-      - name: entrypoint-volume
+          defaultMode: 0755
+      - name: nginx-conf-volume
         configMap:
-          name: nginx-entrypoint
-          defaultMode: 0755 # ¡Esta es la línea clave!
+          name: nginx-conf-config
+          items:
+          - key: nginx.conf
+            path: nginx.conf
 ---
 apiVersion: v1
 kind: Service
@@ -43,5 +51,5 @@ spec:
   type: NodePort
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
+      port: 80 # Puerto interno del Service
+      targetPort: 80 # Puerto del contenedor
