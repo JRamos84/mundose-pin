@@ -1,4 +1,4 @@
-# nginx-deployment.yaml
+# k8s/nginx/nginx-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -48,25 +48,22 @@ spec:
           items:
           - key: nginx.conf
             path: nginx.conf
-
 ---
-# nginx-service.yaml (modificado)
+# k8s/nginx/nginx-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: nginx-service
 spec:
+  # El tipo de servicio es la pieza clave para que Kubernetes sepa qué hacer.
+  type: LoadBalancer
   selector:
     app: nginx
-  # Este es el cambio clave: de NodePort a LoadBalancer
-  type: LoadBalancer
   ports:
-    # Puerto para el tráfico HTTP regular (tu página web)
     - name: http
       protocol: TCP
       port: 80
       targetPort: 80
-    # Puerto para las métricas de Prometheus del exporter
     - name: metrics
       protocol: TCP
       port: 9113

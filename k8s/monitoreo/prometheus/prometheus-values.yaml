@@ -14,8 +14,7 @@ server:
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-      # Esta es la corrección clave: reescribe la dirección del scrape para incluir el puerto
-      # que se encuentra en la anotación prometheus.io/port. Esto permite puertos dinámicos.
+      # Reescribe la dirección para incluir el puerto de la anotación, permitiendo puertos dinámicos.
       - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
         action: replace
         target_label: __address__

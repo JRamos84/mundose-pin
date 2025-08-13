@@ -15,9 +15,7 @@ echo "--- Creando ConfigMap para la configuración de Nginx ---"
 kubectl create configmap nginx-conf-config --from-file=src/nginx.conf --dry-run=client -o yaml | kubectl apply -f -
 
 echo "--- Desplegando Nginx y su servicio de tipo LoadBalancer ---"
-# Aplica el Deployment para los pods de Nginx
 kubectl apply -f k8s/nginx/nginx-deployment.yaml
-# Aplica el Service de tipo LoadBalancer para exponer Nginx
 
 
 echo "--- Desplegando Prometheus ---"
@@ -43,7 +41,8 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "--- Verificando que todos los pods estén listos ---"
 kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus-server -n prometheus --timeout=300s
+# Corregido: La etiqueta del servidor de Prometheus es 'app.kubernetes.io/name=prometheus'
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n prometheus --timeout=300s
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n grafana --timeout=300s
 
 echo "--- Laboratorio listo. Ahora debes configurar el acceso de forma manual ---"
@@ -54,17 +53,11 @@ echo "---"
 echo "minikube tunnel -p lab-k8s"
 echo "---"
 echo ""
-echo "En otra terminal, puedes acceder a Prometheus y Grafana usando port-forward:"
-echo "---"
-echo "kubectl --namespace prometheus port-forward svc/prometheus-server 9090:9090 &"
-echo "kubectl --namespace grafana port-forward svc/grafana 3000:3000 &"
-echo "---"
-echo ""
 echo "Una vez que el túnel esté funcionando, obtén la IP externa del servicio de Nginx con:"
 echo "---"
 echo "kubectl get service nginx-service"
 echo "---"
 echo "Podrás acceder a los servicios en tu máquina:"
 echo "  - Nginx:      http://<IP-EXTERNA-DEL-SERVICIO-NGINX>"
-echo "  - Prometheus: http://localhost:9090"
-echo "  - Grafana:    http://localhost:3000"
+echo "  - Prometheus: http://<IP-EXTERNA-DEL-SERVICIO-NGINX>/prometheus"
+echo "  - Grafana:    http://<IP-EXTERNA-DEL-SERVICIO-NGINX>/grafana"
