@@ -1,25 +1,21 @@
 # k8s/monitoreo/prometheus/prometheus-values.yaml
 
-# Configuración del servidor de Prometheus
 server:
-  # El Service de Prometheus será de tipo ClusterIP
   service:
     type: ClusterIP
     annotations: {}
-  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
   ingress:
     enabled: false
-  # Aquí configuramos la ruta base para Prometheus
-  # Esto le dice a Prometheus que su URL de acceso es /prometheus
   baseURL: /prometheus
-
-  # Configuración del volumen persistente para el servidor
+  # Solución al error: habilitar la recarga de configuración vía HTTP
+  extraFlags:
+    - --web.enable-lifecycle
+  
   persistentVolume:
     enabled: true
     storageClass: "standard"
     size: 8Gi
 
-# Configuración de los componentes adicionales
 alertmanager:
   persistentVolume:
     enabled: true

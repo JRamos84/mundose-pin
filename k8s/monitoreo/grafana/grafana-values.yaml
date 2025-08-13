@@ -5,7 +5,7 @@ service:
   # El Service de Grafana será de tipo ClusterIP
   type: ClusterIP
   annotations: {}
-  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
+  # Deshabilitamos el Ingress, ya que Ingress lo manejará
   ingress:
     enabled: false
   # Aquí configuramos la ruta base para Grafana
@@ -22,3 +22,8 @@ persistence:
   enabled: true
   storageClassName: "standard"
   size: 5Gi
+
+# Configuramos el deployment para que se comporte como un servicio y no como un job.
+deploymentStrategy:
+  type: RollingUpdate
+
