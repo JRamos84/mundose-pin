@@ -4,52 +4,23 @@ server:
   service:
     type: ClusterIP
     annotations: {}
+  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
   ingress:
     enabled: false
-  baseURL: /prometheus
-  # Solución al error: habilitar la recarga de configuración vía HTTP
+  # Aquí configuramos la ruta base para Prometheus
+  # Esto le dice a Prometheus que su URL de acceso es /prometheus
+  base_url: /prometheus
+
+  # Usar extraFlags para habilitar la recarga de configuración vía HTTP
   extraFlags:
     - --web.enable-lifecycle
   
-  # Usar serverFiles es la forma más fiable de pasar la configuración a Prometheus
-  serverFiles:
-    prometheus.yml:
-      global:
-        scrape_interval: 15s
-        evaluation_interval: 15s
-      scrape_configs:
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            action: keep
-            regex: true
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-            action: replace
-            target_label: __metrics_path__
-            regex: (.+)
-          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-            action: replace
-            target_label: __address__
-            regex: '([^:]+)(?::\d+)?;(\d+)'
-            replacement: '$1:$2'
-          - action: labelmap
-            regex: __meta_kubernetes_pod_label_(.+)
-          - source_labels: [__meta_kubernetes_pod_name]
-            action: replace
-            target_label: kubernetes_pod_name
-          - source_labels: [__meta_kubernetes_namespace]
-            action: replace
-            target_label: kubernetes_namespace
-  
+  # Deshabilitamos el volumen persistente para simplificar el laboratorio.
+  # Esto resuelve problemas de permisos y garantiza el inicio.
   persistentVolume:
-    enabled: true
-    storageClass: "standard"
-    size: 8Gi
+    enabled: false
 
+# Deshabilitamos la persistencia en el alertmanager para simplificar.
 alertmanager:
   persistentVolume:
-    enabled: true
-    storageClass: "standard"
-    size: 2Gi
+    enabled: false
