@@ -1,34 +1,26 @@
 server:
   extraScrapeConfigs: |
+    # Job genérico que monitorea cualquier Pod con las anotaciones correctas
     - job_name: 'kubernetes-pods'
       kubernetes_sd_configs:
       - role: pod
       relabel_configs:
+      # Filtra para mantener solo los pods que tienen la anotación prometheus.io/scrape=true
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
         action: keep
         regex: true
+      # Usa el valor de la anotación prometheus.io/path para establecer la ruta de las métricas
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+      # Esta es la corrección clave: reescribe la dirección del scrape para incluir el puerto
+      # que se encuentra en la anotación prometheus.io/port. Esto permite puertos dinámicos.
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
         action: replace
-        target_label: __meta_kubernetes_pod_container_port_number
-        regex: (\d+)
-      - source_labels: [__address__]
-        action: replace
-        regex: ([^:]+)(?::\d+)?
         target_label: __address__
-        replacement: $1:9113
+        regex: '([^:]+)(?::\d+)?;(\d+)'
+        replacement: '$1:$2'
+      # Copia las etiquetas del pod al target de Prometheus
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
-    - job_name: 'nginx-exporter'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        action: keep
-        regex: nginx
-      - source_labels: [__meta_kubernetes_pod_container_port_number]
-        action: keep
-        regex: "9113"

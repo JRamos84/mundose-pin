@@ -1,4 +1,4 @@
-# k8s/nginx/nginx-deployment.yaml
+# nginx-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,12 +12,18 @@ spec:
     metadata:
       labels:
         app: nginx
+      annotations:
+        # Añade estas 3 líneas para que el trabajo de Prometheus encuentre tu exporter
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9113"
     spec:
       containers:
       - name: nginx-container
         image: nginx:latest
         ports:
-        - containerPort: 80
+        - name: http
+          containerPort: 80
         volumeMounts:
         - name: html-volume
           mountPath: /usr/share/nginx/html/index.html
@@ -28,7 +34,8 @@ spec:
       - name: nginx-exporter-container
         image: nginx/nginx-prometheus-exporter:1.0.0
         ports:
-        - containerPort: 9113
+        - name: metrics
+          containerPort: 9113
       volumes:
       - name: html-volume
         configMap:
@@ -37,10 +44,13 @@ spec:
       - name: nginx-conf-volume
         configMap:
           name: nginx-conf-config
+          defaultMode: 0644
           items:
           - key: nginx.conf
             path: nginx.conf
+
 ---
+# nginx-service.yaml (modificado)
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,8 +58,16 @@ metadata:
 spec:
   selector:
     app: nginx
-  type: NodePort
+  # Este es el cambio clave: de NodePort a LoadBalancer
+  type: LoadBalancer
   ports:
-    - protocol: TCP
-      port: 80 # Puerto interno del Service
-      targetPort: 80 # Puerto del contenedor
+    # Puerto para el tráfico HTTP regular (tu página web)
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    # Puerto para las métricas de Prometheus del exporter
+    - name: metrics
+      protocol: TCP
+      port: 9113
+      targetPort: 9113
