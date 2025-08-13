@@ -43,7 +43,6 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "--- Verificando que todos los pods estén listos ---"
 kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
-# Corregido: busca el Pod con la etiqueta correcta
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus-server -n prometheus --timeout=300s
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n grafana --timeout=300s
 
