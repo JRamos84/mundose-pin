@@ -60,12 +60,12 @@ echo "--- Creando las reglas de Ingress para exponer los servicios ---"
 kubectl apply -f k8s/nginx/nginx-ingress.yaml
 
 echo "--- Verificando que todos los pods estén listos ---"
-# Se espera a que los pods de Nginx estén listos.
-kubectl wait --for=condition=ready pod -l app=nginx -n default --timeout=300s
-# Corregido: La etiqueta del servidor de Prometheus es 'app.kubernetes.io/name=prometheus-server'.
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus-server -n prometheus --timeout=300s
-# Se espera a que los pods de Grafana estén listos.
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n grafana --timeout=300s
+# Se espera a que el deployment de Nginx esté listo.
+kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=300s
+# Corregido: Se espera a que el deployment de Prometheus esté listo.
+kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=300s
+# Se espera a que el deployment de Grafana esté listo.
+kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=300s
 
 echo "--- Laboratorio listo con Ingress ---"
 echo ""
