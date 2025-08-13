@@ -1,0 +1,24 @@
+# k8s/monitoreo/grafana/grafana-values.yaml
+
+# Configuración del servicio de Grafana
+service:
+  # El Service de Grafana será de tipo ClusterIP
+  type: ClusterIP
+  annotations: {}
+  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
+  ingress:
+    enabled: false
+  # Aquí configuramos la ruta base para Grafana
+  # Esta configuración es la que le permite funcionar bajo una subruta
+  grafana.ini:
+    server:
+      # Grafana usa una variable para la ruta base
+      root_url: "%(protocol)s://%(domain)s/grafana/"
+      # Grafana necesita saber que está en una subruta
+      serve_from_sub_path: true
+
+# Configuración del volumen persistente para Grafana
+persistence:
+  enabled: true
+  storageClassName: "standard"
+  size: 5Gi

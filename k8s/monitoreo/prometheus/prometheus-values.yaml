@@ -1,25 +1,27 @@
+# k8s/monitoreo/prometheus/prometheus-values.yaml
+
+# Configuración del servidor de Prometheus
 server:
-  extraScrapeConfigs: |
-    # Job genérico que monitorea cualquier Pod con las anotaciones correctas
-    - job_name: 'kubernetes-pods'
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      # Filtra para mantener solo los pods que tienen la anotación prometheus.io/scrape=true
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-      # Usa el valor de la anotación prometheus.io/path para establecer la ruta de las métricas
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
-      # Reescribe la dirección para incluir el puerto de la anotación, permitiendo puertos dinámicos.
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        target_label: __address__
-        regex: '([^:]+)(?::\d+)?;(\d+)'
-        replacement: '$1:$2'
-      # Copia las etiquetas del pod al target de Prometheus
-      - action: labelmap
-        regex: __meta_kubernetes_pod_label_(.+)
+  # El Service de Prometheus será de tipo ClusterIP
+  service:
+    type: ClusterIP
+    annotations: {}
+  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
+  ingress:
+    enabled: false
+  # Aquí configuramos la ruta base para Prometheus
+  # Esto le dice a Prometheus que su URL de acceso es /prometheus
+  baseURL: /prometheus
+
+  # Configuración del volumen persistente para el servidor
+  persistentVolume:
+    enabled: true
+    storageClass: "standard"
+    size: 8Gi
+
+# Configuración de los componentes adicionales
+alertmanager:
+  persistentVolume:
+    enabled: true
+    storageClass: "standard"
+    size: 2Gi
