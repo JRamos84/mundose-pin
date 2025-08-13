@@ -4,23 +4,21 @@ server:
   service:
     type: ClusterIP
     annotations: {}
-  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy
+  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy.
   ingress:
     enabled: false
-  # Aquí configuramos la ruta base para Prometheus
-  # Esto le dice a Prometheus que su URL de acceso es /prometheus
-  base_url: /prometheus
-
-  # Usar extraFlags para habilitar la recarga de configuración vía HTTP
-  extraFlags:
-    - --web.enable-lifecycle
+  # Aquí configuramos la ruta base para Prometheus.
+  baseURL: /prometheus
   
-  # Deshabilitamos el volumen persistente para simplificar el laboratorio.
-  # Esto resuelve problemas de permisos y garantiza el inicio.
+  # CORRECCIÓN: Se elimina la línea 'extraArgs' porque el chart ya habilita
+  # la funcionalidad de lifecycle por defecto.
+  
+  # Deshabilitamos la persistencia para simplificar el laboratorio.
   persistentVolume:
     enabled: false
 
 # Deshabilitamos la persistencia en el alertmanager para simplificar.
 alertmanager:
+  enabled: false
   persistentVolume:
     enabled: false
