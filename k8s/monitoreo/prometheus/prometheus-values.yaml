@@ -10,8 +10,21 @@ server:
   # Aquí configuramos la ruta base para Prometheus.
   baseURL: /prometheus
   
-  # CORRECCIÓN: Se elimina la línea 'extraArgs' porque el chart ya habilita
-  # la funcionalidad de lifecycle por defecto.
+  # CORRECCIÓN: Configuración de las sondas para que usen la ruta base.
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    path: /prometheus/-/ready
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 4
+  livenessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 30
+    path: /prometheus/-/healthy
+    periodSeconds: 15
+    successThreshold: 1
+    timeoutSeconds: 10
   
   # Deshabilitamos la persistencia para simplificar el laboratorio.
   persistentVolume:
