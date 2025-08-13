@@ -9,6 +9,7 @@ spec:
   - host: lab.local
     http:
       paths:
+      # Regla para Nginx
       - path: /
         pathType: Prefix
         backend:
@@ -16,15 +17,17 @@ spec:
             name: nginx-service
             port:
               number: 80
+      # Regla para Prometheus
       - path: /prometheus(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: prometheus-server
             port:
               number: 9090
+      # Regla para Grafana
       - path: /grafana(/|$)(.*)
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: grafana

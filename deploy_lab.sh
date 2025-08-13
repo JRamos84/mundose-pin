@@ -6,47 +6,46 @@ echo "--- Verificando estado de Minikube y Docker ---"
 minikube start --driver=docker --memory=2200mb --cpus 2 --profile=lab-k8s
 eval $(minikube docker-env -p lab-k8s)
 
-# Habilita el addon de Ingress en Minikube
 echo "--- Habilitando Ingress en Minikube ---"
 minikube addons enable ingress -p lab-k8s
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=300s
 
 echo "--- Creando ConfigMap para el contenido HTML de Nginx ---"
 kubectl create configmap nginx-html-config --from-file=src/index.html --dry-run=client -o yaml | kubectl apply -f -
 
 echo "--- Creando ConfigMap para la configuración de Nginx ---"
-# Se usa la configuración de Nginx sin el proxy inverso
 kubectl create configmap nginx-conf-config --from-file=src/nginx.conf --dry-run=client -o yaml | kubectl apply -f -
 
 echo "--- Desplegando Nginx y su servicio (tipo ClusterIP) ---"
 kubectl apply -f k8s/nginx/nginx-deployment.yaml
-# El service de Nginx ahora es ClusterIP, el Ingress lo expone
 kubectl apply -f k8s/nginx/nginx-service.yaml
 
 echo "--- Desplegando Prometheus ---"
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
 helm repo update
 kubectl create namespace prometheus || true
+# Se elimina --wait para evitar errores de tiempo de espera
 helm upgrade --install prometheus prometheus-community/prometheus \
   --namespace prometheus \
   --set alertmanager.persistentVolume.storageClass="standard" \
   --set server.persistentVolume.storageClass="standard" \
   --set server.service.type=ClusterIP \
-  --set server.service.port=9090 \
-  -f k8s/monitoreo/prometheus/prometheus-values.yaml \
-  --wait
+  -f k8s/monitoreo/prometheus/prometheus-values.yaml
 
 echo "--- Desplegando Grafana ---"
 helm repo add grafana https://grafana.github.io/helm-charts || true
 helm repo update
 kubectl create namespace grafana || true
+# Se elimina --wait para evitar errores de tiempo de espera
 helm upgrade --install grafana grafana/grafana \
   --namespace grafana \
   --set service.type=ClusterIP \
-  -f k8s/monitoreo/grafana/grafana-values.yaml \
-  --wait
+  -f k8s/monitoreo/grafana/grafana-values.yaml
 
 echo "--- Creando las reglas de Ingress para exponer los servicios ---"
-# Aplica el manifiesto de Ingress
 kubectl apply -f k8s/nginx/nginx-ingress.yaml
 
 echo "--- Verificando que todos los pods estén listos ---"
