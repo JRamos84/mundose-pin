@@ -7,7 +7,7 @@ minikube start --driver=docker --memory=2200mb --cpus 2
 eval $(minikube docker-env)
 
 # El comando de montaje de Vagrant no es necesario en una máquina física.
-echo "--- La carpeta compartida de Vagrant no es necesaria en este entorno. ---"
+#echo "--- La carpeta compartida de Vagrant no es necesaria en este entorno. ---"
 
 # --- CREACIÓN DE CONFIGMAPS ---
 # Esto creará un ConfigMap con el contenido de tu archivo src/index.html.
