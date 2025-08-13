@@ -64,7 +64,7 @@ echo "--- Verificando que todos los pods estén listos ---"
 kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=300s
 # Corregido: Se espera a que el deployment de Prometheus esté listo.
 kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=300s
-# Se espera a que el deployment de Grafana esté listo.
+# Corregido: Se espera a que el deployment de Grafana esté listo.
 kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=300s
 
 echo "--- Laboratorio listo con Ingress ---"
