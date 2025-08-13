@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lab-ingress
+  annotations:
+    # Esta anotación es la clave. Le dice a Nginx que reescriba la URL.
+    # Por ejemplo, /grafana/algo se reescribe a /algo,
+    # y /grafana se reescribe a la raíz del servicio.
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: lab.local
+    http:
+      paths:
+      # Regla para Nginx
+      # Esta regla captura la raíz y cualquier cosa que le siga,
+      # pero solo si no coincide con las otras rutas más específicas.
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+      # Regla para Prometheus
+      # Captura la ruta /prometheus/ y lo que le siga, y lo redirige correctamente.
+      - path: /prometheus(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-server
+            port:
+              number: 9090
+      # Regla para Grafana
+      - path: /grafana(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

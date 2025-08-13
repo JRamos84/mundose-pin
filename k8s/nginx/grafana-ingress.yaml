@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-ingress
+  name: grafana-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -9,10 +9,10 @@ spec:
   - host: lab.local
     http:
       paths:
-      - path: /
-        pathType: Exact
+      - path: /grafana
+        pathType: Prefix
         backend:
           service:
-            name: nginx-service
+            name: grafana
             port:
-              number: 80
+              number: 3000

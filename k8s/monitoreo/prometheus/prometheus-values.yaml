@@ -7,8 +7,7 @@ server:
   # Deshabilitamos el Ingress, ya que Nginx actuará como proxy.
   ingress:
     enabled: false
-  # Aquí configuramos la ruta base para Prometheus.
-  baseURL: /prometheus
+  # CORRECCIÓN: Se elimina la línea baseURL para evitar el conflicto.
   
   # CORRECCIÓN: Configuración de las sondas para que usen la ruta base.
   readinessProbe:
