@@ -26,7 +26,7 @@ minikube addons enable ingress -p ${MINIKUBE_PROFILE}
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
-  --timeout=90s
+  --timeout=220s
 
 echo "--- Creando ConfigMaps para la configuración de Nginx ---"
 # Se crea un ConfigMap para el contenido HTML.
@@ -66,15 +66,17 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "--- Verificando que todos los pods estén listos ---"
 # Se espera a que el deployment de Nginx esté listo.
-kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=90s
+kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=220s
 # Corregido: El nombre del deployment de Prometheus creado por el chart es 'prometheus-server'.
-kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=90s
+kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=220s
 # Corregido: El nombre del deployment de Grafana creado por el chart es 'grafana'.
-kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=90s
+kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=220s
 
 echo "--- Creando las reglas de Ingress para exponer los servicios ---"
 # Aplica el manifiesto de Ingress después de que todos los servicios estén listos.
-kubectl apply -f k8s/nginx/nginx-ingress.yaml
+kubectl apply -f k8s/nginx/ingress-nginx.yaml
+kubectl apply -f k8s/monitoreo/prometheus/ingress-prometheus.yaml
+kubectl apply -f k8s/monitoreo/grafana/ingress-grafana.yaml
 
 echo "--- Laboratorio listo con Ingress ---"
 echo ""

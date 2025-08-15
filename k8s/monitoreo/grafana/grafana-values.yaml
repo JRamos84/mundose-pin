@@ -1,19 +1,13 @@
-# k8s/monitoreo/grafana/grafana-values.yaml
-
+# Dejamos la configuración de service y persistence que ya tenías
 service:
-  # El Service de Grafana será de tipo ClusterIP
   type: ClusterIP
-  annotations: {}
-  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy.
-  ingress:
-    enabled: false
-
-# Configuramos la ruta base para Grafana
-grafana.ini:
-  server:
-    root_url: "%(protocol)s://%(domain)s/grafana/"
-    serve_from_sub_path: true
-
-# Deshabilitamos la persistencia para simplificar el despliegue.
+ingress:
+  enabled: false
 persistence:
   enabled: false
+
+# Esta es la parte importante
+grafana.ini:
+  server:
+    root_url: http://lab.local/grafana/
+    serve_from_sub_path: true

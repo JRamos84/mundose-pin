@@ -1,35 +1,18 @@
-# k8s/monitoreo/prometheus/prometheus-values.yaml
-
 server:
+  routePrefix: /prometheus
+  extraArgs:
+    web.external-url: http://lab.local/prometheus
+  readinessProbe:
+    path: /prometheus/-/ready
+  livenessProbe:
+    path: /prometheus/-/healthy
   service:
     type: ClusterIP
-    annotations: {}
-  # Deshabilitamos el Ingress, ya que Nginx actuará como proxy.
   ingress:
     enabled: false
-  # CORRECCIÓN: Se elimina la línea baseURL para evitar el conflicto.
-  
-  # CORRECCIÓN: Configuración de las sondas para que usen la ruta base.
-  readinessProbe:
-    failureThreshold: 3
-    initialDelaySeconds: 10
-    path: /prometheus/-/ready
-    periodSeconds: 5
-    successThreshold: 1
-    timeoutSeconds: 4
-  livenessProbe:
-    failureThreshold: 3
-    initialDelaySeconds: 30
-    path: /prometheus/-/healthy
-    periodSeconds: 15
-    successThreshold: 1
-    timeoutSeconds: 10
-  
-  # Deshabilitamos la persistencia para simplificar el laboratorio.
   persistentVolume:
     enabled: false
 
-# Deshabilitamos la persistencia en el alertmanager para simplificar.
 alertmanager:
   enabled: false
   persistentVolume:
