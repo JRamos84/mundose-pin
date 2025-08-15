@@ -1,11 +1,4 @@
 server:
-  routePrefix: /prometheus
-  extraArgs:
-    web.external-url: http://lab.local/prometheus
-  readinessProbe:
-    path: /prometheus/-/ready
-  livenessProbe:
-    path: /prometheus/-/healthy
   service:
     type: ClusterIP
   ingress:

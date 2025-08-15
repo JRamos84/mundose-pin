@@ -1,19 +1,20 @@
+# k8s/monitoreo/grafana/ingress-grafana.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
   namespace: grafana
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: lab.local
+  - host: grafana.lab.local
     http:
       paths:
-      - path: /grafana(/|$)(.*)
-        pathType: ImplementationSpecific
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: grafana
             port:
-              number: 3000
+              number: 80 # El servicio de Grafana expone el puerto 80

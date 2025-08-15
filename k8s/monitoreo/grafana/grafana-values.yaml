@@ -1,13 +1,7 @@
-# Dejamos la configuración de service y persistence que ya tenías
+# k8s/monitoreo/grafana/grafana-values.yaml
 service:
   type: ClusterIP
 ingress:
   enabled: false
 persistence:
   enabled: false
-
-# Esta es la parte importante
-grafana.ini:
-  server:
-    root_url: http://lab.local/grafana/
-    serve_from_sub_path: true
