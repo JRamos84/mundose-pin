@@ -14,7 +14,7 @@ echo "--- Verificando y arrancando Minikube con Docker ---"
 # Se verifica si el clúster ya existe para evitar reiniciarlo innecesariamente.
 if ! minikube status --profile=${MINIKUBE_PROFILE} >/dev/null 2>&1; then
     echo "Iniciando Minikube..."
-    minikube start --driver=docker --memory=2200mb --cpus 2 --profile=${MINIKUBE_PROFILE}
+    minikube start --driver=docker --memory=4096mb --cpus 4 --profile=${MINIKUBE_PROFILE}
 else
     echo "El clúster Minikube '${MINIKUBE_PROFILE}' ya está en ejecución."
 fi
@@ -26,7 +26,7 @@ minikube addons enable ingress -p ${MINIKUBE_PROFILE}
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
-  --timeout=300s
+  --timeout=90s
 
 echo "--- Creando ConfigMaps para la configuración de Nginx ---"
 # Se crea un ConfigMap para el contenido HTML.
@@ -66,11 +66,11 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "--- Verificando que todos los pods estén listos ---"
 # Se espera a que el deployment de Nginx esté listo.
-kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=300s
+kubectl wait --for=condition=ready deployment/nginx-deployment -n default --timeout=90s
 # Corregido: El nombre del deployment de Prometheus creado por el chart es 'prometheus-server'.
-kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=300s
+kubectl wait --for=condition=ready deployment/prometheus-server -n prometheus --timeout=90s
 # Corregido: El nombre del deployment de Grafana creado por el chart es 'grafana'.
-kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=300s
+kubectl wait --for=condition=ready deployment/grafana -n grafana --timeout=90s
 
 echo "--- Creando las reglas de Ingress para exponer los servicios ---"
 # Aplica el manifiesto de Ingress después de que todos los servicios estén listos.
