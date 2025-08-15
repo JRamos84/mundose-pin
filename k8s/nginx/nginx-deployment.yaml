@@ -30,7 +30,10 @@ spec:
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
       - name: nginx-exporter-container
-        image: nginx/nginx-prometheus-exporter:1.0.0
+        image: nginx/nginx-prometheus-exporter:1.1.0
+        # --- ESTA ES LA ÚNICA SECCIÓN AÑADIDA ---
+        args:
+        - -nginx.scrape-uri=http://localhost:80/nginx_status
         ports:
         - name: metrics
           containerPort: 9113
@@ -38,11 +41,9 @@ spec:
       - name: html-volume
         configMap:
           name: nginx-html-config
-          defaultMode: 0755
       - name: nginx-conf-volume
         configMap:
           name: nginx-conf-config
-          defaultMode: 0644
           items:
           - key: nginx.conf
             path: nginx.conf
