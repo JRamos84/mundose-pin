@@ -92,3 +92,103 @@ Para detener y liberar completamente los recursos del clúster de Minikube:
 Esto detendrá el clúster y lo eliminará por completo, borrando todos los datos asociados.
 
 ---
+
+
+comandos 
+
+Claro, hay varios comandos de kubectl que puedes usar para verificar si tus pods están desplegados correctamente. Aquí te los presento desde el más básico y común hasta otros más específicos y útiles.
+
+1. El Comando Esencial: kubectl get pods
+Este es el comando principal para listar todos los pods en el namespace (espacio de nombres) actual. Te da un resumen rápido de su estado.
+
+Bash
+
+kubectl get pods
+Salida de ejemplo:
+
+NAME                               READY   STATUS    RESTARTS   AGE
+grafana-676d56c547-abcde           1/1     Running   0          5m
+nginx-deployment-78dcf96497-fghij   1/1     Running   0          10m
+nginx-deployment-78dcf96497-klmno   1/1     Running   0          10m
+prometheus-server-65c6c888-pqrst    2/2     Running   0          8m
+¿Qué significa cada columna?
+
+NAME: El nombre único del pod.
+
+READY: Muestra cuántos contenedores dentro del pod están "listos" del total. 1/1 es lo ideal. Si ves 0/1, algo anda mal.
+
+STATUS: El estado del pod. Los más importantes son:
+
+Running: El pod está funcionando correctamente. ¡Esto es lo que quieres ver!
+
+Pending: El pod fue aceptado por Kubernetes, pero aún no se ejecuta (por ejemplo, está descargando la imagen del contenedor o esperando recursos).
+
+Completed: El pod ejecutó su tarea y terminó exitosamente.
+
+Error / CrashLoopBackOff: El pod ha fallado y Kubernetes está intentando reiniciarlo repetidamente. Este es un signo de problema.
+
+RESTARTS: El número de veces que los contenedores del pod han sido reiniciados. Un número alto indica problemas.
+
+AGE: Cuánto tiempo ha pasado desde que se creó el pod.
+
+2. Ver Pods en TODOS los Namespaces
+Si tus aplicaciones están en diferentes espacios de nombres (como en tu script, que usa default, prometheus y grafana), necesitas una vista global.
+
+Bash
+
+kubectl get pods --all-namespaces
+O su versión corta:
+
+Bash
+
+kubectl get pods -A
+Salida de ejemplo:
+
+NAMESPACE       NAME                                       READY   STATUS      RESTARTS   AGE
+default         nginx-deployment-78dcf96497-fghij          1/1     Running     0          10m
+grafana         grafana-676d56c547-abcde                   1/1     Running     0          5m
+ingress-nginx   ingress-nginx-controller-b958c8a6f-lmnop   1/1     Running     0          15m
+kube-system     coredns-787d7b5745-qrstuv                   1/1     Running     0          20m
+prometheus      prometheus-server-65c6c888-pqrst           2/2     Running     0          8m
+3. Observar los Cambios en Tiempo Real
+Si acabas de desplegar algo, es muy útil ver cómo los pods cambian de estado en tiempo real. Para esto, usas la bandera -w (watch).
+
+Bash
+
+kubectl get pods -w
+Tu terminal se quedará "enganchada", mostrando los cambios a medida que los pods pasan de Pending a ContainerCreating y finalmente a Running. Para salir, presiona Ctrl + C.
+
+4. Obtener Más Detalles de un Pod Específico
+Si un pod no está en estado Running (por ejemplo, está en Error o Pending), el siguiente paso es "describirlo" para obtener un diagnóstico detallado.
+
+Bash
+
+kubectl describe pod <nombre-del-pod> -n <namespace-del-pod>
+Ejemplo:
+
+Bash
+
+kubectl describe pod prometheus-server-65c6c888-pqrst -n prometheus
+Este comando te dará muchísima información, pero la sección más importante para diagnosticar problemas es la de Events (Eventos) al final. Ahí verás mensajes de error como "Failed to pull image" (no se pudo descargar la imagen), "Insufficient cpu" (CPU insuficiente), o fallos en las pruebas de salud (liveness/readiness probes).
+
+5. Verificar el Estado de los Deployments
+A menudo, los pods son gestionados por un recurso de nivel superior llamado Deployment. Verificar el estado del Deployment es una forma más robusta de saber si tu aplicación está desplegada y con la cantidad correcta de réplicas.
+
+Bash
+
+kubectl get deployments -A
+Salida de ejemplo:
+
+NAMESPACE    NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+default      nginx-deployment    2/2     2            2           12m
+grafana      grafana             1/1     1            1           7m
+prometheus   prometheus-server   1/1     1            1           10m
+La columna clave es READY, que muestra deseadas/actuales. Si ves 2/2 significa que las 2 réplicas que querías están desplegadas y listas.
+
+Resumen Rápido
+Para...	Usa el comando...
+Ver un resumen rápido de los pods en el namespace actual	kubectl get pods
+Ver TODOS los pods en el clúster	kubectl get pods -A
+Vigilar los cambios en tiempo real	kubectl get pods -w
+Diagnosticar un pod con problemas	kubectl describe pod <nombre-pod> -n <namespace>
+Verificar el estado general de las aplicaciones	kubectl get deployments -A
